@@ -17,6 +17,7 @@ type BikeRim struct {
 	ID          uint   `gorm:"primary_key;auto_increment" json:"id"`
 	Name        string `gorm:"size:60;column:name;not null" json:"name"`
 	Description string `gorm:"size:128;column:description" json:"description"`
+	Diameter    uint   `gorm:"type:integer;column:diameter" json:"diameter"`
 }
 
 func (u *BikeRim) FindAllBikeRims(db *gorm.DB) (*[]BikeRim, error) {

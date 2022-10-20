@@ -19,6 +19,7 @@ func (s *Server) initializeRoutes() {
 
 	// Bike routes
 	s.Router.HandleFunc("/bikes", middlewares.SetMiddlewareJSON(s.GetBikes)).Methods("GET")
+	s.Router.HandleFunc("/bikes", middlewares.SetMiddlewareJSON(s.CreateBike)).Methods("POST")
 	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareJSON(s.GetBike)).Methods("GET")
 
 	s.Router.HandleFunc("/bikerims", middlewares.SetMiddlewareJSON(s.GetBikeRims)).Methods("GET")

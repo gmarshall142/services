@@ -2,6 +2,8 @@ package models
 
 import (
 	"errors"
+	"html"
+	"strings"
 	"time"
 
 	"github.com/lib/pq"
@@ -20,27 +22,46 @@ type Bike struct {
 	BikeRim    BikeRim       `gorm:"foreignKey:BikeRimId"`
 }
 
-//func (u *User) BeforeSave() error {
-//	hashedPassword, err := Hash(u.Password)
-//	if err != nil {
-//		return err
-//	}
-//	u.Password = string(hashedPassword)
-//	return nil
-//}
-//
-//func (u *User) Prepare() {
-//	u.ID = 0
-//	u.FirstName = html.EscapeString(strings.TrimSpace(u.FirstName))
-//	u.MI = html.EscapeString(strings.TrimSpace(u.MI))
-//	u.LastName = html.EscapeString(strings.TrimSpace(u.LastName))
-//	u.Phone = html.EscapeString(strings.TrimSpace(u.Phone))
-//	u.Email = html.EscapeString(strings.TrimSpace(u.Email))
-//	u.CreatedAt = time.Now()
-//	u.UpdatedAt = time.Now()
-//}
+func (obj *Bike) Prepare() {
+	obj.ID = 0
+	obj.Name = html.EscapeString(strings.TrimSpace(obj.Name))
+	obj.CreatedAt = time.Now()
+	obj.UpdatedAt = time.Now()
+}
 
-func (u *Bike) FindAllBikes(db *gorm.DB) (*[]Bike, error) {
+func (obj *Bike) Validate(action string) error {
+	switch strings.ToLower(action) {
+	case "update":
+		if obj.Name == "" {
+			return errors.New("Required Name")
+		}
+		return nil
+	default:
+		if obj.Name == "" {
+			return errors.New("Required Name")
+		}
+		return nil
+	}
+}
+
+func (obj *Bike) SaveBike(db *gorm.DB) (*Bike, error) {
+	var err error
+	err = db.Debug().Create(&obj).Error
+	if err != nil {
+		return &Bike{}, err
+	}
+
+	if obj.ID != 0 {
+		err = db.Debug().Model(&BikeRim{}).Where("id = ?", obj.BikeRimId).Take(&obj.BikeRim).Error
+		if err != nil {
+			return &Bike{}, err
+		}
+	}
+
+	return obj, nil
+}
+
+func (obj *Bike) FindAllBikes(db *gorm.DB) (*[]Bike, error) {
 	var err error
 	var bikes []Bike
 	err = db.Debug().Model(&Bike{}).Limit(100).Preload("BikeRim").Find(&bikes).Error
@@ -50,16 +71,16 @@ func (u *Bike) FindAllBikes(db *gorm.DB) (*[]Bike, error) {
 	return &bikes, err
 }
 
-func (u *Bike) FindBikeByID(db *gorm.DB, uid uint32) (*Bike, error) {
+func (obj *Bike) FindBikeByID(db *gorm.DB, uid uint32) (*Bike, error) {
 	var err error
-	err = db.Debug().Model(Bike{}).Preload("BikeRim").Where("id = ?", uid).Take(&u).Error
+	err = db.Debug().Model(Bike{}).Preload("BikeRim").Where("id = ?", uid).Take(&obj).Error
 	if err != nil {
 		return &Bike{}, err
 	}
 	if err == gorm.ErrRecordNotFound {
 		return &Bike{}, errors.New("Bike Not Found")
 	}
-	return u, err
+	return obj, err
 }
 
 //func (u *User) Validate(action string) error {
