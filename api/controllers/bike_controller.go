@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/gmarshall142/services/api/auth"
 	"github.com/gmarshall142/services/api/models"
 	"github.com/gmarshall142/services/api/responses"
 	"github.com/gmarshall142/services/api/utils/formaterror"
@@ -69,4 +71,71 @@ func (server *Server) GetBike(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	responses.JSON(w, http.StatusOK, rec)
+}
+
+func (server *Server) UpdateBike(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	uid, err := strconv.ParseUint(vars["id"], 10, 32)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+	bike := models.Bike{}
+	err = json.Unmarshal(body, &bike)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+	_, err = auth.ExtractTokenID(r)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+	// TODO: check token isk valid
+
+	bike.Prepare()
+	err = bike.Validate("update")
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+	updatedBike, err := bike.UpdateUser(server.DB, uint32(uid))
+	if err != nil {
+		formattedError := formaterror.FormatError(err.Error())
+		responses.ERROR(w, http.StatusInternalServerError, formattedError)
+		return
+	}
+	responses.JSON(w, http.StatusOK, updatedBike)
+}
+
+func (server *Server) DeleteBike(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	bike := models.Bike{}
+
+	uid, err := strconv.ParseUint(vars["id"], 10, 32)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	_, err = auth.ExtractTokenID(r)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+		return
+	}
+	//if tokenID != 0 && tokenID != uint32(uid) {
+	//	responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+	//	return
+	//}
+	_, err = bike.DeleteBike(server.DB, uint32(uid))
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	w.Header().Set("Entity", fmt.Sprintf("%d", uid))
+	responses.JSON(w, http.StatusNoContent, "")
 }

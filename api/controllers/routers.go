@@ -10,7 +10,7 @@ func (s *Server) initializeRoutes() {
 	// Login Route
 	s.Router.HandleFunc("/login", middlewares.SetMiddlewareJSON(s.Login)).Methods("POST")
 
-	//Users routes
+	// Users routes
 	s.Router.HandleFunc("/users", middlewares.SetMiddlewareJSON(s.CreateUser)).Methods("POST")
 	s.Router.HandleFunc("/users", middlewares.SetMiddlewareJSON(s.GetUsers)).Methods("GET")
 	s.Router.HandleFunc("/users/{id}", middlewares.SetMiddlewareJSON(s.GetUser)).Methods("GET")
@@ -21,6 +21,8 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/bikes", middlewares.SetMiddlewareJSON(s.GetBikes)).Methods("GET")
 	s.Router.HandleFunc("/bikes", middlewares.SetMiddlewareJSON(s.CreateBike)).Methods("POST")
 	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareJSON(s.GetBike)).Methods("GET")
+	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateBike))).Methods("PUT")
+	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareAuthentication(s.DeleteBike)).Methods("DELETE")
 
 	s.Router.HandleFunc("/bikerims", middlewares.SetMiddlewareJSON(s.GetBikeRims)).Methods("GET")
 	s.Router.HandleFunc("/bikerims/{id}", middlewares.SetMiddlewareJSON(s.GetBikeRim)).Methods("GET")
