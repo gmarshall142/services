@@ -23,7 +23,13 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/users/{id}", middlewares.SetMiddlewareAuthentication(s.DeleteUser)).Methods("DELETE")
 
 	// Bike routes
-	s.Router.HandleFunc("/bikes", middlewares.SetMiddlewareJSON(s.GetBikes)).Methods("GET")
+	//s.Router.HandleFunc("/bikes", middlewares.SetMiddlewareJSON(s.GetBikes)).Methods("GET")
+	//s.Router.HandleFunc("/bikes", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareValidToken(s.GetBikes))).Methods("GET")
+	s.Router.Handle("/bikes", middlewares.EnsureValidToken()(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			s.GetBikes(w, r)
+		}),
+	))
 	s.Router.HandleFunc("/bikes", middlewares.SetMiddlewareJSON(s.CreateBike)).Methods("POST")
 	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareJSON(s.GetBike)).Methods("GET")
 	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateBike))).Methods("PUT")
