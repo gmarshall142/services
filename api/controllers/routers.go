@@ -23,27 +23,15 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/users/{id}", middlewares.SetMiddlewareAuthentication(s.DeleteUser)).Methods("DELETE")
 
 	// Bike routes
-	//s.Router.HandleFunc("/bikes", middlewares.SetMiddlewareJSON(s.GetBikes)).Methods("GET")
-	//s.Router.HandleFunc("/bikes", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareValidToken(s.GetBikes))).Methods("GET")
-	s.Router.Handle("/bikes", middlewares.EnsureValidToken()(
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			s.GetBikes(w, r)
-		}),
-	))
-	s.Router.HandleFunc("/bikes", middlewares.SetMiddlewareJSON(s.CreateBike)).Methods("POST")
+	//s.Router.Handle("/bikes", middlewares.ValidateToken(http.HandlerFunc(s.GetBikes))).Methods("GET")
+	s.Router.Handle("/bikes", middlewares.SetMiddlewareValidToken(s.GetBikes)).Methods("GET")
+	s.Router.Handle("/bikes", middlewares.ValidateTokenAndScope(s.CreateBike, "write:bikes")).Methods("POST")
 	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareJSON(s.GetBike)).Methods("GET")
 	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateBike))).Methods("PUT")
 	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareAuthentication(s.DeleteBike)).Methods("DELETE")
 
-	s.Router.HandleFunc("/bikerims", middlewares.SetMiddlewareJSON(s.GetBikeRims)).Methods("GET")
+	s.Router.Handle("/bikerims", middlewares.SetMiddlewareValidToken(s.GetBikeRims)).Methods("GET")
 	s.Router.HandleFunc("/bikerims/{id}", middlewares.SetMiddlewareJSON(s.GetBikeRim)).Methods("GET")
-
-	//Posts routes
-	//s.Router.HandleFunc("/posts", middlewares.SetMiddlewareJSON(s.CreatePost)).Methods("POST")
-	//s.Router.HandleFunc("/posts", middlewares.SetMiddlewareJSON(s.GetPosts)).Methods("GET")
-	//s.Router.HandleFunc("/posts/{id}", middlewares.SetMiddlewareJSON(s.GetPost)).Methods("GET")
-	//s.Router.HandleFunc("/posts/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdatePost))).Methods("PUT")
-	//s.Router.HandleFunc("/posts/{id}", middlewares.SetMiddlewareAuthentication(s.DeletePost)).Methods("DELETE")
 
 	// This route is always accessible.
 	s.Router.Handle("/api/public", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +41,7 @@ func (s *Server) initializeRoutes() {
 	}))
 
 	// This route is only accessible if the user has a valid access_token.
-	s.Router.Handle("/api/private", middlewares.EnsureValidToken()(
+	s.Router.Handle("/api/private", middlewares.EnsureValidTokenSV()(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
@@ -63,7 +51,7 @@ func (s *Server) initializeRoutes() {
 
 	// This route is only accessible if the user has a
 	// valid access_token with the read:messages scope.
-	s.Router.Handle("/api/private-scoped", middlewares.EnsureValidToken()(
+	s.Router.Handle("/api/private-scoped", middlewares.EnsureValidTokenSV()(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 
