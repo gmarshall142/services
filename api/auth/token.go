@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,6 +13,17 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 )
+
+var publicKey *rsa.PublicKey
+
+func init() {
+	key, _ := os.ReadFile("certs/dev-rn77drwl.pem")
+	parsedKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(key))
+	if err != nil {
+		fmt.Errorf("error verifying token: %v", err)
+	}
+	publicKey = parsedKey
+}
 
 func CreateToken(user_id uint32) (string, error) {
 	claims := jwt.MapClaims{}
@@ -29,16 +41,8 @@ func TokenValid(r *http.Request) error {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
-		//return []byte(os.Getenv("API_SECRET")), nil
-		//return []byte(secret), nil
-		//secret := os.Getenv("API_SECRET")
-		key, _ := os.ReadFile("test/dev-rn77drwl.pem")
-		parsedKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(key))
-		if err != nil {
-			return nil, fmt.Errorf("Error verifying token: %v", err)
-		}
 
-		return parsedKey, nil
+		return publicKey, nil
 	})
 	if err != nil {
 		return err
