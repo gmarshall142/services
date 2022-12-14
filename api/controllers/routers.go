@@ -24,13 +24,15 @@ func (s *Server) initializeRoutes() {
 
 	// Bike routes
 	//s.Router.Handle("/bikes", middlewares.ValidateToken(http.HandlerFunc(s.GetBikes))).Methods("GET")
-	s.Router.Handle("/bikes", middlewares.SetMiddlewareValidToken(s.GetBikes)).Methods("GET")
+	//s.Router.Handle("/bikes", middlewares.SetMiddlewareValidToken(s.GetBikes)).Methods("GET")
+	s.Router.Handle("/bikes", middlewares.ValidateToken(s.GetBikes)).Methods("GET")
 	s.Router.Handle("/bikes", middlewares.ValidateTokenAndScope(s.CreateBike, "write:bikes")).Methods("POST")
 	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareJSON(s.GetBike)).Methods("GET")
 	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateBike))).Methods("PUT")
 	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareAuthentication(s.DeleteBike)).Methods("DELETE")
 
-	s.Router.Handle("/bikerims", middlewares.SetMiddlewareValidToken(s.GetBikeRims)).Methods("GET")
+	//s.Router.Handle("/bikerims", middlewares.SetMiddlewareValidToken(s.GetBikeRims)).Methods("GET")
+	s.Router.Handle("/bikerims", middlewares.ValidateToken(s.GetBikeRims)).Methods("GET")
 	s.Router.HandleFunc("/bikerims/{id}", middlewares.SetMiddlewareJSON(s.GetBikeRim)).Methods("GET")
 
 	// This route is always accessible.

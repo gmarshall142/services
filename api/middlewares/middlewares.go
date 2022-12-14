@@ -54,6 +54,17 @@ func ValidateTokenAndScope(next http.HandlerFunc, scope string) http.Handler {
 	return EnsureValidTokenAndScope(next, scope)
 }
 
+func ValidateToken(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := auth.TokenValid(r)
+		if err != nil {
+			responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+			return
+		}
+		next(w, r)
+	}
+}
+
 // validateToken middleware verifies a valid Auth0 JWT token being present in the request.
 //func ValidateToken(next http.Handler) http.Handler {
 //	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
