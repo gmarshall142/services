@@ -9,8 +9,6 @@ import (
 	"net/http"
 )
 
-const ctxTokenKey = "Auth0Token"
-
 type message struct {
 	Message string `json:"message"`
 }
@@ -46,14 +44,6 @@ func SetMiddlewareAuthentication(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func SetMiddlewareValidToken(next http.HandlerFunc) http.Handler {
-	return EnsureValidToken(next)
-}
-
-func ValidateTokenAndScope(next http.HandlerFunc, scope string) http.Handler {
-	return EnsureValidTokenAndScope(next, scope)
-}
-
 func ValidateToken(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := auth.TokenValid(r)
@@ -65,17 +55,13 @@ func ValidateToken(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// validateToken middleware verifies a valid Auth0 JWT token being present in the request.
-//func ValidateToken(next http.Handler) http.Handler {
-//	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-//		token, err := extractToken(req)
-//		if err != nil {
-//			fmt.Printf("failed to parse payload: %s\n", err)
-//			rw.WriteHeader(http.StatusUnauthorized)
-//			sendMessage(rw, &message{err.Error()})
-//			return
-//		}
-//		ctxWithToken := context.WithValue(req.Context(), ctxTokenKey, token)
-//		next.ServeHTTP(rw, req.WithContext(ctxWithToken))
-//	})
-//}
+func ValidateTokenAndPerm(next http.HandlerFunc, perm string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := auth.TokenAndPermValid(r, perm)
+		if err != nil {
+			responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+			return
+		}
+		next(w, r)
+	}
+}
