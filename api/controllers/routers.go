@@ -23,12 +23,12 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/users/{id}", middlewares.SetMiddlewareAuthentication(s.DeleteUser)).Methods("DELETE")
 
 	// Bike routes
-	//s.Router.Handle("/bikes", middlewares.ValidateToken(s.GetBikes)).Methods("GET")
-	s.Router.Handle("/bikes", middlewares.ValidateTokenAndPerm(s.GetBikes, "write:bikes")).Methods("GET")
+	s.Router.Handle("/bikes", middlewares.ValidateToken(s.GetBikes)).Methods("GET")
+	//s.Router.Handle("/bikes", middlewares.ValidateTokenAndPerm(s.GetBikes, "write:bikes")).Methods("GET")
 	s.Router.Handle("/bikes", middlewares.ValidateTokenAndPerm(s.CreateBike, "write:bikes")).Methods("POST")
-	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareJSON(s.GetBike)).Methods("GET")
-	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateBike))).Methods("PUT")
-	s.Router.HandleFunc("/bikes/{id}", middlewares.SetMiddlewareAuthentication(s.DeleteBike)).Methods("DELETE")
+	s.Router.HandleFunc("/bikes/{id}", middlewares.ValidateToken(s.GetBike)).Methods("GET")
+	s.Router.HandleFunc("/bikes/{id}", middlewares.ValidateTokenAndPerm(s.UpdateBike, "write:bikes")).Methods("PUT")
+	s.Router.HandleFunc("/bikes/{id}", middlewares.ValidateTokenAndPerm(s.DeleteBike, "write:bikes")).Methods("DELETE")
 
 	//s.Router.Handle("/bikerims", middlewares.SetMiddlewareValidToken(s.GetBikeRims)).Methods("GET")
 	s.Router.Handle("/bikerims", middlewares.ValidateToken(s.GetBikeRims)).Methods("GET")

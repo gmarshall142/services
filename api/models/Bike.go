@@ -83,7 +83,7 @@ func (obj *Bike) FindBikeByID(db *gorm.DB, uid uint32) (*Bike, error) {
 	return obj, err
 }
 
-func (obj *Bike) UpdateUser(db *gorm.DB, uid uint32) (*Bike, error) {
+func (obj *Bike) UpdateBike(db *gorm.DB, uid uint32) (*Bike, error) {
 	db = db.Debug().Model(&Bike{}).Where("id = ?", uid).Take(&Bike{}).UpdateColumns(
 		map[string]interface{}{
 			"name":       obj.Name,

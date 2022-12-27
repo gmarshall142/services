@@ -27,19 +27,7 @@ func (server *Server) GetBikes(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) CreateBike(w http.ResponseWriter, r *http.Request) {
-
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-	}
-	bike := models.Bike{}
-	err = json.Unmarshal(body, &bike)
-	if err != nil {
-		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-		return
-	}
-	bike.Prepare()
-	err = bike.Validate("")
+	bike, err := getBikeRecord(r)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
@@ -74,37 +62,21 @@ func (server *Server) GetBike(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) UpdateBike(w http.ResponseWriter, r *http.Request) {
+	// get record ID
 	vars := mux.Vars(r)
 	uid, err := strconv.ParseUint(vars["id"], 10, 32)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-		return
-	}
-	bike := models.Bike{}
-	err = json.Unmarshal(body, &bike)
-	if err != nil {
-		responses.ERROR(w, http.StatusUnprocessableEntity, err)
-		return
-	}
-	_, err = auth.ExtractTokenID(r)
-	if err != nil {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
-		return
-	}
-	// TODO: check token isk valid
 
-	bike.Prepare()
-	err = bike.Validate("update")
+	bike, err := getBikeRecord(r)
 	if err != nil {
 		responses.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
-	updatedBike, err := bike.UpdateUser(server.DB, uint32(uid))
+
+	updatedBike, err := bike.UpdateBike(server.DB, uint32(uid))
 	if err != nil {
 		formattedError := formaterror.FormatError(err.Error())
 		responses.ERROR(w, http.StatusInternalServerError, formattedError)
@@ -138,4 +110,22 @@ func (server *Server) DeleteBike(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Entity", fmt.Sprintf("%d", uid))
 	responses.JSON(w, http.StatusNoContent, "")
+}
+
+func getBikeRecord(r *http.Request) (models.Bike, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return models.Bike{}, err
+	}
+	bike := models.Bike{}
+	err = json.Unmarshal(body, &bike)
+	if err != nil {
+		return models.Bike{}, err
+	}
+	bike.Prepare()
+	err = bike.Validate("update")
+	if err != nil {
+		return models.Bike{}, err
+	}
+	return bike, nil
 }
