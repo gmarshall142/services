@@ -2,9 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/gmarshall142/services/api/auth"
 	"github.com/gmarshall142/services/api/models"
 	"github.com/gmarshall142/services/api/responses"
 	"github.com/gmarshall142/services/api/utils/formaterror"
@@ -86,19 +84,19 @@ func (server *Server) UpdateBike(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) DeleteBike(w http.ResponseWriter, r *http.Request) {
+	// get record ID
 	vars := mux.Vars(r)
 	bike := models.Bike{}
-
 	uid, err := strconv.ParseUint(vars["id"], 10, 32)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
-	_, err = auth.ExtractTokenID(r)
-	if err != nil {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
-		return
-	}
+	//_, err = auth.ExtractTokenID(r)
+	//if err != nil {
+	//	responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+	//	return
+	//}
 	//if tokenID != 0 && tokenID != uint32(uid) {
 	//	responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 	//	return

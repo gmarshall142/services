@@ -46,7 +46,7 @@ func (server *Server) Run(addr string) {
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:8000"},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
-		AllowedHeaders:   []string{"Content-type", "Authorization"},
+		AllowedHeaders:   []string{"Origin", "Content-type", "Authorization"},
 		AllowCredentials: true,
 		// Enable Debugging for testing, consider disabling in production
 		Debug: true,
