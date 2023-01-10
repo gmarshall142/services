@@ -29,9 +29,8 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/bikes/{id}", middlewares.ValidateTokenAndPerm(s.UpdateBike, "write:bikes")).Methods("PUT")
 	s.Router.HandleFunc("/bikes/{id}", middlewares.ValidateTokenAndPerm(s.DeleteBike, "write:bikes")).Methods("DELETE")
 
-	//s.Router.Handle("/bikerims", middlewares.SetMiddlewareValidToken(s.GetBikeRims)).Methods("GET")
 	s.Router.Handle("/bikerims", middlewares.ValidateToken(s.GetBikeRims)).Methods("GET")
-	s.Router.HandleFunc("/bikerims/{id}", middlewares.SetMiddlewareJSON(s.GetBikeRim)).Methods("GET")
+	s.Router.HandleFunc("/bikerims/{id}", middlewares.ValidateToken(s.GetBikeRim)).Methods("GET")
 
 	// This route is always accessible.
 	s.Router.Handle("/api/public", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
