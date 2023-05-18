@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
+	"os"
 )
 
 type Video struct {
@@ -146,7 +147,7 @@ func getMoviesDbRecord(id string) (*Video, error) {
 	}
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-RapidAPI-Key", "4f30d942ddmsh60b374d32dbb5bcp1bcf79jsn0de0f16b12a3")
+	req.Header.Add("X-RapidAPI-Key", os.Getenv("RAPID_API_KEY"))
 	req.Header.Add("X-RapidAPI-Host", "moviesdatabase.p.rapidapi.com")
 	resp, err := client.Do(req)
 	if err != nil {
