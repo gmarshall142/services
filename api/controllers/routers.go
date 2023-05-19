@@ -33,7 +33,7 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/bikerims/{id}", middlewares.ValidateToken(s.GetBikeRim)).Methods("GET")
 
 	// Video routes
-	s.Router.HandleFunc("/video/{id}", middlewares.ValidateToken(s.GetVideo)).Methods("GET")
+	s.Router.HandleFunc("/video/moviesdb/{id}", middlewares.ValidateToken(s.GetVideoData)).Methods("GET")
 
 	// Test Routes ==============================================================
 	// This route is always accessible.

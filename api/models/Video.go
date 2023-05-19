@@ -1,19 +1,22 @@
 package models
 
 import (
-	"encoding/json"
-	"fmt"
-	"golang.org/x/text/currency"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
-	"io/ioutil"
-	"net/http"
-	"os"
+	"strings"
 )
 
 type Video struct {
-	ID     uint   `gorm:"primary_key;auto_increment" json:"id"`
-	ImdbID string `gorm:"size:9;column:imdb;not null;" json:"imdb"`
-	Name   string `gorm:"size:60;column:name;not null;" json:"name"`
+	ID          uint           `gorm:"primary_key;auto_increment" json:"id"`
+	ImdbID      string         `gorm:"size:9;column:imdb;not null;" json:"imdb"`
+	Name        string         `gorm:"size:60;column:name;not null;" json:"name"`
+	ImageUrl    string         `gorm:"size:256;column:imageurl;not null;" json:"imageurl"`
+	ImageWidth  uint           `gorm:"column:imagewidth" json:"imagewidth"`
+	ImageHeight uint           `gorm:"column:imageheight" json:"imageheight"`
+	Runtime     uint           `gorm:"column:runtime" json:"runtime"`
+	Genres      pq.StringArray `gorm:"type:string[];column:genres" json:"genres"`
+	Plot        string         `gorm:"size:512;column:plot;" json:"plot"`
+	Actors      pq.StringArray `gorm:"type:string[];column:actors" json:"actors"`
 }
 
 //ChainRings pq.Int64Array `gorm:"type:integer[];column:chainrings" json:"chainrings"`
@@ -23,27 +26,6 @@ type Video struct {
 //UpdatedAt  time.Time     `gorm:"default:CURRENT_TIMESTAMP;column:updatedat" json:"updatedat"`
 //BikeRimId  uint          `gorm:"type:integer;column:bikerimid" json:"bikerimid"`
 //BikeRim    BikeRim       `gorm:"foreignKey:BikeRimId"`
-
-type TitleText struct {
-	Text     string `json:"text"`
-	TypeName string `json:"__typename"`
-}
-
-type BaseInfo struct {
-	ID        string    `json:"id"`
-	TitleText TitleText `json:"titleText"`
-}
-
-type BaseInfoResults struct {
-	Results BaseInfo `json:"results"`
-}
-
-type PrincipalCast struct {
-	ID currency.Unit
-}
-
-type MoviesDB struct {
-}
 
 //func (obj *Bike) Prepare() {
 //	obj.ID = 0
@@ -103,10 +85,23 @@ func (obj *Video) FindVideoByImdbID(db *gorm.DB, id string) (*Video, error) {
 	//if err == gorm.ErrRecordNotFound {
 	//	return &Video{}, errors.New("Video Not Found")
 	//}
-	obj, err = getMoviesDbRecord(id)
+	rawObj, err := getMoviesDbRecord(id)
 	if err != nil {
 		return &Video{}, err
 	}
+
+	obj.ImdbID = rawObj.ImdbID
+	obj.Name = rawObj.Name
+	obj.ImageUrl = rawObj.ImageUrl
+	obj.ImageWidth = rawObj.ImageWidth
+	obj.ImageHeight = rawObj.ImageHeight
+	obj.Runtime = rawObj.Runtime
+	for _, genre := range rawObj.Genres {
+		obj.Genres = append(obj.Genres, strings.ToLower(genre))
+	}
+	obj.Plot = rawObj.Plot
+	obj.Actors = rawObj.Actors
+
 	return obj, err
 }
 
@@ -137,50 +132,3 @@ func (obj *Video) FindVideoByImdbID(db *gorm.DB, id string) (*Video, error) {
 //	}
 //	return db.RowsAffected, nil
 //}
-
-func getMoviesDbRecord(id string) (*Video, error) {
-	url := "https://moviesdatabase.p.rapidapi.com/titles/" + id + "?info=base_info"
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Print(err.Error())
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("X-RapidAPI-Key", os.Getenv("RAPID_API_KEY"))
-	req.Header.Add("X-RapidAPI-Host", "moviesdatabase.p.rapidapi.com")
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Print(err.Error())
-	}
-
-	defer resp.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Print(err.Error())
-	}
-
-	var responseObject BaseInfoResults
-	json.Unmarshal(bodyBytes, &responseObject)
-	fmt.Printf("API Response as struct %+v\n", responseObject)
-	video := Video{}
-	video.ImdbID = responseObject.Results.ID
-	video.Name = responseObject.Results.TitleText.Text
-
-	//body, err := ioutil.ReadAll(r.Body)
-	//if err != nil {
-	//	return models.Bike{}, err
-	//}
-	//bike := models.Bike{}
-	//err = json.Unmarshal(body, &bike)
-	//if err != nil {
-	//	return models.Bike{}, err
-	//}
-	//bike.Prepare()
-	//err = bike.Validate("update")
-	//if err != nil {
-	//	return models.Bike{}, err
-	//}
-	//return bike, nil
-	return &video, nil
-}

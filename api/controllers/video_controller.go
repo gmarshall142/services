@@ -37,7 +37,7 @@ import (
 //	responses.JSON(w, http.StatusCreated, bikeCreated)
 //}
 
-func (server *Server) GetVideo(w http.ResponseWriter, r *http.Request) {
+func (server *Server) GetVideoData(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	//uid, err := strconv.ParseUint(vars["id"], 10, 32)
