@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sync"
 )
 
 type RawVideo struct {
@@ -75,35 +76,48 @@ type BaseInfoResults struct {
 
 func getMoviesDbRecord(id string) (*RawVideo, error) {
 	video := RawVideo{}
+	wg := sync.WaitGroup{}
 
 	//============================================================================
-	baseObj, err := moviesDbRequest(id, "base_info")
-	if err != nil {
-		fmt.Print(err.Error())
-		return nil, err
-	}
-	video.ImdbID = baseObj.Results.ID
-	video.Name = baseObj.Results.TitleText.Text
-	video.ImageUrl = baseObj.Results.Image.Url
-	video.ImageWidth = baseObj.Results.Image.Width
-	video.ImageHeight = baseObj.Results.Image.Height
-	video.Runtime = baseObj.Results.Runtime.Seconds
-	for _, genre := range baseObj.Results.Genres.Genres {
-		video.Genres = append(video.Genres, genre.Text)
-	}
-	video.Plot = baseObj.Results.Plot.PlotText.Text
-
-	//============================================================================
-	respObj, err := moviesDbRequest(id, "principalCast")
-	if err != nil {
-		fmt.Print(err.Error())
-		return nil, err
-	}
-	for _, pc := range respObj.Results.PrincipalCast {
-		for _, credit := range pc.Credits {
-			video.Actors = append(video.Actors, credit.Name.NameText.Text)
+	idx := 0
+	wg.Add(1)
+	go func(idx int) {
+		baseObj, err := moviesDbRequest(id, "base_info")
+		if err != nil {
+			fmt.Print(err.Error())
+			return
 		}
-	}
+		video.ImdbID = baseObj.Results.ID
+		video.Name = baseObj.Results.TitleText.Text
+		video.ImageUrl = baseObj.Results.Image.Url
+		video.ImageWidth = baseObj.Results.Image.Width
+		video.ImageHeight = baseObj.Results.Image.Height
+		video.Runtime = baseObj.Results.Runtime.Seconds
+		for _, genre := range baseObj.Results.Genres.Genres {
+			video.Genres = append(video.Genres, genre.Text)
+		}
+		video.Plot = baseObj.Results.Plot.PlotText.Text
+		wg.Done()
+	}(idx)
+
+	//============================================================================
+	idx++
+	wg.Add(1)
+	go func(idx int) {
+		respObj, err := moviesDbRequest(id, "principalCast")
+		if err != nil {
+			fmt.Print(err.Error())
+			return
+		}
+		for _, pc := range respObj.Results.PrincipalCast {
+			for _, credit := range pc.Credits {
+				video.Actors = append(video.Actors, credit.Name.NameText.Text)
+			}
+		}
+		wg.Done()
+	}(idx)
+
+	wg.Wait()
 
 	return &video, nil
 }
