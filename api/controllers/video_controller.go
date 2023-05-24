@@ -7,6 +7,18 @@ import (
 	"net/http"
 )
 
+func (server *Server) GetVideoFormats(w http.ResponseWriter, r *http.Request) {
+
+	videoFormat := models.VideoFormat{}
+
+	videoFormats, err := videoFormat.FindAllVideoFormats(server.DB)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	responses.JSON(w, http.StatusOK, videoFormats)
+}
+
 //func (server *Server) GetBikes(w http.ResponseWriter, r *http.Request) {
 //
 //	bike := models.Bike{}
@@ -46,7 +58,7 @@ func (server *Server) GetVideoData(w http.ResponseWriter, r *http.Request) {
 	//	return
 	//}
 	video := models.Video{}
-	rec, err := video.FindVideoByImdbID(server.DB, vars["id"])
+	rec, err := video.FindVideoByImdbID(vars["id"])
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return

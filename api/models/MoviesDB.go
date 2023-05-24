@@ -19,6 +19,7 @@ type RawVideo struct {
 	Genres      []string
 	Plot        string
 	Actors      []string
+	Directors   []string
 }
 type TitleText struct {
 	Text     string `json:"text"`
@@ -59,6 +60,9 @@ type Credits struct {
 type PrincipalCast struct {
 	Credits []Credits `json:"credits"`
 }
+type Directors struct {
+	Credits []Credits `json:"credits"`
+}
 
 type BaseInfo struct {
 	ID            string          `json:"id"`
@@ -68,6 +72,7 @@ type BaseInfo struct {
 	Genres        Genres          `json:"genres"`
 	Plot          Plot            `json:"plot"`
 	PrincipalCast []PrincipalCast `json:"principalCast"`
+	Directors     []Directors     `json:"directors"`
 }
 
 type BaseInfoResults struct {
@@ -78,7 +83,7 @@ func getMoviesDbRecord(id string) (*RawVideo, error) {
 	video := RawVideo{}
 	wg := sync.WaitGroup{}
 
-	//============================================================================
+	// base_info
 	idx := 0
 	wg.Add(1)
 	go func(idx int) {
@@ -100,7 +105,7 @@ func getMoviesDbRecord(id string) (*RawVideo, error) {
 		wg.Done()
 	}(idx)
 
-	//============================================================================
+	// principalCast
 	idx++
 	wg.Add(1)
 	go func(idx int) {
@@ -117,6 +122,22 @@ func getMoviesDbRecord(id string) (*RawVideo, error) {
 		wg.Done()
 	}(idx)
 
+	// creators_directors_writers
+	idx++
+	wg.Add(1)
+	go func(idx int) {
+		respObj, err := moviesDbRequest(id, "creators_directors_writers")
+		if err != nil {
+			fmt.Print(err.Error())
+			return
+		}
+		for _, dir := range respObj.Results.Directors {
+			for _, credit := range dir.Credits {
+				video.Directors = append(video.Directors, credit.Name.NameText.Text)
+			}
+		}
+		wg.Done()
+	}(idx)
 	wg.Wait()
 
 	return &video, nil
