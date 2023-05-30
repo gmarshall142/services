@@ -34,7 +34,12 @@ func (s *Server) initializeRoutes() {
 
 	// Video routes
 	s.Router.Handle("/video/formats", middlewares.ValidateToken(s.GetVideoFormats)).Methods("GET")
+	s.Router.Handle("/video", middlewares.ValidateToken(s.GetVideos)).Methods("GET")
 	s.Router.HandleFunc("/video/moviesdb/{id}", middlewares.ValidateToken(s.GetVideoData)).Methods("GET")
+	s.Router.Handle("/video", middlewares.ValidateTokenAndPerm(s.CreateVideo, "write:bikes")).Methods("POST")
+	s.Router.HandleFunc("/video/{id}", middlewares.ValidateTokenAndPerm(s.UpdateVideo, "write:bikes")).Methods("PUT")
+	s.Router.HandleFunc("/video/{id}", middlewares.ValidateTokenAndPerm(s.DeleteVideo, "write:bikes")).Methods("DELETE")
+	s.Router.HandleFunc("/video/title/{title}", middlewares.ValidateToken(s.GetVideosByTitle)).Methods("GET")
 
 	// Test Routes ==============================================================
 	// This route is always accessible.
