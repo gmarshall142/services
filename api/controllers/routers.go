@@ -32,6 +32,10 @@ func (s *Server) initializeRoutes() {
 	s.Router.Handle("/bikerims", middlewares.ValidateToken(s.GetBikeRims)).Methods("GET")
 	s.Router.HandleFunc("/bikerims/{id}", middlewares.ValidateToken(s.GetBikeRim)).Methods("GET")
 
+	// Audio routes
+	s.Router.Handle("/audio/formats", middlewares.ValidateToken(s.GetAudioFormats)).Methods("GET")
+	s.Router.HandleFunc("/audio/discogs", middlewares.ValidateToken(s.GetAudioData)).Methods("GET")
+
 	// Video routes
 	s.Router.Handle("/video/formats", middlewares.ValidateToken(s.GetVideoFormats)).Methods("GET")
 	s.Router.Handle("/video", middlewares.ValidateToken(s.GetVideos)).Methods("GET")
