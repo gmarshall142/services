@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/lib/pq"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -10,19 +11,19 @@ type Audio struct {
 	ID            uint           `gorm:"primary_key;auto_increment" json:"id"`
 	MasterID      uint           `gorm:"column:masterid;" json:"masterid"`
 	Title         string         `gorm:"size:128;column:title;not null;" json:"title"`
-	Year          string         `gorm:"size:4;column:year" json:"year"`
 	ImageUrl      string         `gorm:"size:256;column:imageurl;not null;" json:"imageurl"`
 	ImageWidth    uint           `gorm:"column:imagewidth" json:"imagewidth"`
 	ImageHeight   uint           `gorm:"column:imageheight" json:"imageheight"`
-	Runtime       uint           `gorm:"column:runtime" json:"runtime"`
 	Genres        pq.StringArray `gorm:"type:string[];column:genres" json:"genres"`
-	Plot          string         `gorm:"size:1024;column:plot;" json:"plot"`
-	Actors        pq.StringArray `gorm:"type:string[];column:actors" json:"actors"`
-	Directors     pq.StringArray `gorm:"type:string[];column:directors" json:"directors"`
-	VideoFormatId uint           `gorm:"type:integer;column:videoformatid" json:"videoformatid"`
-	VideoFormat   VideoFormat    `gorm:"foreignKey:VideoFormatId"`
+	Artists       pq.StringArray `gorm:"type:string[];column:artists" json:"artists"`
 	CreatedAt     time.Time      `gorm:"default:CURRENT_TIMESTAMP;column:createdat" json:"createdat"`
 	UpdatedAt     time.Time      `gorm:"default:CURRENT_TIMESTAMP;column:updatedat" json:"updatedat"`
+	AudioFormatId uint           `gorm:"type:integer;column:audioformatid" json:"audioformatid"`
+	AudioFormat   AudioFormat    `gorm:"foreignKey:AudioFormatId"`
+	Notes         string         `gorm:"size:60;column:notes;" json:"notes"`
+	Catno         string         `gorm:"size:10;column:catno;" json:"catno"`
+	Barcode       string         `gorm:"size:20;column:barcode;" json:"barcode"`
+	Year          string         `gorm:"size:4;column:year" json:"year"`
 }
 
 //	func (obj *Video) Prepare() {
@@ -146,17 +147,16 @@ func (obj *Audio) FindAudioByDiscogsSearch(params url.Values) (*Audio, error) {
 
 	obj.MasterID = rawObj.MasterID
 	obj.Title = rawObj.Title
+	obj.ImageUrl = rawObj.ImageUrl
+	obj.ImageWidth = rawObj.ImageWidth
+	obj.ImageHeight = rawObj.ImageHeight
+	for _, genre := range rawObj.Genres {
+		obj.Genres = append(obj.Genres, strings.ToLower(genre))
+	}
+	obj.Artists = rawObj.Artists
+	obj.Catno = rawObj.Catno
+	obj.Barcode = rawObj.Barcode
 	obj.Year = rawObj.Year
-	//obj.ImageUrl = rawObj.ImageUrl
-	//obj.ImageWidth = rawObj.ImageWidth
-	//obj.ImageHeight = rawObj.ImageHeight
-	//obj.Runtime = rawObj.Runtime
-	//for _, genre := range rawObj.Genres {
-	//	obj.Genres = append(obj.Genres, strings.ToLower(genre))
-	//}
-	//obj.Plot = rawObj.Plot
-	//obj.Actors = rawObj.Actors
-	//obj.Directors = rawObj.Directors
 
 	return obj, err
 }

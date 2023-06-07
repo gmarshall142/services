@@ -3,10 +3,12 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/lib/pq"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 )
 
 //	type RawVideo struct {
@@ -22,9 +24,16 @@ import (
 //		Directors   []string
 //	}
 type RawAudio struct {
-	MasterID uint
-	Title    string
-	Year     string
+	MasterID    uint
+	Title       string
+	ImageUrl    string
+	ImageWidth  uint
+	ImageHeight uint
+	Genres      pq.StringArray
+	Artists     pq.StringArray
+	Catno       string
+	Barcode     string
+	Year        string
 }
 
 //	type TitleText struct {
@@ -76,17 +85,24 @@ type RawAudio struct {
 type AudioBaseInfo struct {
 	MasterID uint   `json:"master_id"`
 	Title    string `json:"title"`
+	Catno    string `json:"catno"`
+	Barcode  string `json:"barcode"`
+	Thumb    string `json:"thumb"`
 	Year     string `json:"year"`
 }
 
-// Image         PrimaryImage    `json:"primaryImage"`
-// Runtime       Runtime         `json:"runtime"`
-// Genres        Genres          `json:"genres"`
-// Plot          Plot            `json:"plot"`
-// PrincipalCast []PrincipalCast `json:"principalCast"`
-// Directors     []Directors     `json:"directors"`
 type AudioBaseInfoResults struct {
 	Results []AudioBaseInfo `json:"results"`
+}
+
+type AudioArtist struct {
+	Name string `json:"name"`
+}
+type AudioMasterResults struct {
+	Title   string        `json:"title"`
+	Artists []AudioArtist `json:"artists"`
+	Genres  []string      `json:"genres"`
+	Styles  []string      `json:"styles"`
 }
 
 func getDiscogsRecord(params url.Values) (*RawAudio, error) {
@@ -103,74 +119,51 @@ func getDiscogsRecord(params url.Values) (*RawAudio, error) {
 	//idx := 0
 	//wg.Add(1)
 	//go func(idx int) {
-	url := ""
+	var url string
 	if catno != "" {
 		url = "https://api.discogs.com/database/search?catno=" + catno
 	} else {
 		url = "https://api.discogs.com/database/search?barcode=" + barcode
 	}
-	baseObj, err := discogsSearch(url)
+	bodyBytes, err := discogsCall(url)
 	if err != nil {
 		fmt.Print(err.Error())
 		return nil, err
 	}
-	if len(baseObj.Results) > 0 {
-		results := baseObj.Results[0]
+	var responseObject AudioBaseInfoResults
+	json.Unmarshal(bodyBytes, &responseObject)
+
+	if len(responseObject.Results) > 0 {
+		results := responseObject.Results[0]
 		audio.MasterID = results.MasterID
-		audio.Title = results.Title
+		audio.Catno = results.Catno
+		audio.Barcode = results.Barcode
 		audio.Year = results.Year
-		//	video.ImageUrl = baseObj.Results.Image.Url
-		//	video.ImageWidth = baseObj.Results.Image.Width
-		//	video.ImageHeight = baseObj.Results.Image.Height
-		//	video.Runtime = baseObj.Results.Runtime.Seconds
-		//	for _, genre := range baseObj.Results.Genres.Genres {
-		//		video.Genres = append(video.Genres, genre.Text)
-		//	}
-		//	video.Plot = baseObj.Results.Plot.PlotText.Text
+		audio.ImageUrl = results.Thumb
+		url = "https://api.discogs.com/masters/" + strconv.FormatUint(uint64(audio.MasterID), 10)
+		bodyBytes, err = discogsCall(url)
+		if err != nil {
+			fmt.Print(err.Error())
+			return nil, err
+		}
+		var masterObj AudioMasterResults
+		json.Unmarshal(bodyBytes, &masterObj)
+		audio.Title = masterObj.Title
+		for _, artist := range masterObj.Artists {
+			audio.Artists = append(audio.Artists, artist.Name)
+		}
+		for _, genre := range masterObj.Genres {
+			audio.Genres = append(audio.Genres, genre)
+		}
+		for _, style := range masterObj.Styles {
+			audio.Genres = append(audio.Genres, style)
+		}
 	}
-	//	wg.Done()
-	//}(idx)
-
-	// principalCast
-	//idx++
-	//wg.Add(1)
-	//go func(idx int) {
-	//	respObj, err := moviesDbRequest(id, "principalCast")
-	//	if err != nil {
-	//		fmt.Print(err.Error())
-	//		return
-	//	}
-	//	for _, pc := range respObj.Results.PrincipalCast {
-	//		for _, credit := range pc.Credits {
-	//			video.Actors = append(video.Actors, credit.Name.NameText.Text)
-	//		}
-	//	}
-	//	wg.Done()
-	//}(idx)
-
-	// creators_directors_writers
-	//idx++
-	//wg.Add(1)
-	//go func(idx int) {
-	//	respObj, err := moviesDbRequest(id, "creators_directors_writers")
-	//	if err != nil {
-	//		fmt.Print(err.Error())
-	//		return
-	//	}
-	//	for _, dir := range respObj.Results.Directors {
-	//		for _, credit := range dir.Credits {
-	//			video.Directors = append(video.Directors, credit.Name.NameText.Text)
-	//		}
-	//	}
-	//	wg.Done()
-	//}(idx)
-	//wg.Wait()
 
 	return &audio, nil
 }
 
-func discogsSearch(url string) (*AudioBaseInfoResults, error) {
-	//url := "https://api.discogs.com/database/search?" + param + "=" + val
+func discogsCall(url string) ([]byte, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -196,9 +189,5 @@ func discogsSearch(url string) (*AudioBaseInfoResults, error) {
 		return nil, err
 	}
 
-	var responseObject AudioBaseInfoResults
-	json.Unmarshal(bodyBytes, &responseObject)
-	fmt.Printf("API Response as struct %+v\n", responseObject)
-
-	return &responseObject, nil
+	return bodyBytes, nil
 }
