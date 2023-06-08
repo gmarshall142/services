@@ -24,6 +24,7 @@ type Audio struct {
 	Catno         string         `gorm:"size:10;column:catno;" json:"catno"`
 	Barcode       string         `gorm:"size:20;column:barcode;" json:"barcode"`
 	Year          string         `gorm:"size:4;column:year" json:"year"`
+	AudioTracks   []AudioTrack   `gorm:"foreignKey:AudioId"`
 }
 
 //	func (obj *Video) Prepare() {
@@ -157,6 +158,7 @@ func (obj *Audio) FindAudioByDiscogsSearch(params url.Values) (*Audio, error) {
 	obj.Catno = rawObj.Catno
 	obj.Barcode = rawObj.Barcode
 	obj.Year = rawObj.Year
+	obj.AudioTracks = rawObj.AudioTracks
 
 	return obj, err
 }

@@ -9,20 +9,9 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 )
 
-//	type RawVideo struct {
-//		ImdbID      string
-//		Name        string
-//		ImageUrl    string
-//		ImageWidth  uint
-//		ImageHeight uint
-//		Runtime     uint
-//		Genres      []string
-//		Plot        string
-//		Actors      []string
-//		Directors   []string
-//	}
 type RawAudio struct {
 	MasterID    uint
 	Title       string
@@ -34,54 +23,9 @@ type RawAudio struct {
 	Catno       string
 	Barcode     string
 	Year        string
+	AudioTracks []AudioTrack
 }
 
-//	type TitleText struct {
-//		Text     string `json:"text"`
-//		TypeName string `json:"__typename"`
-//	}
-//
-//	type PrimaryImage struct {
-//		Width  uint   `json:"width"`
-//		Height uint   `json:"height"`
-//		Url    string `json:"url"`
-//	}
-//
-//	type Genre struct {
-//		Text string `json:"text"`
-//	}
-//
-//	type Genres struct {
-//		Genres []Genre `json:"genres"`
-//	}
-//
-//	type Runtime struct {
-//		Seconds uint `json:"seconds"`
-//	}
-//
-//	type PlotText struct {
-//		Text string `json:"plainText"`
-//	}
-//
-//	type Plot struct {
-//		PlotText PlotText `json:"plotText"`
-//	}
-//
-//	type Name struct {
-//		NameText TitleText `json:"nameText"`
-//	}
-//
-//	type Credits struct {
-//		Name Name `json:"name"`
-//	}
-//
-//	type PrincipalCast struct {
-//		Credits []Credits `json:"credits"`
-//	}
-//
-//	type Directors struct {
-//		Credits []Credits `json:"credits"`
-//	}
 type AudioBaseInfo struct {
 	MasterID uint   `json:"master_id"`
 	Title    string `json:"title"`
@@ -98,11 +42,17 @@ type AudioBaseInfoResults struct {
 type AudioArtist struct {
 	Name string `json:"name"`
 }
+type AudioTrackList struct {
+	Title    string `json:"title"`
+	Position string `json:"position"`
+	Duration string `json:"duration"`
+}
 type AudioMasterResults struct {
-	Title   string        `json:"title"`
-	Artists []AudioArtist `json:"artists"`
-	Genres  []string      `json:"genres"`
-	Styles  []string      `json:"styles"`
+	Title     string           `json:"title"`
+	Artists   []AudioArtist    `json:"artists"`
+	Genres    []string         `json:"genres"`
+	Styles    []string         `json:"styles"`
+	TrackList []AudioTrackList `json:"tracklist"`
 }
 
 func getDiscogsRecord(params url.Values) (*RawAudio, error) {
@@ -113,12 +63,7 @@ func getDiscogsRecord(params url.Values) (*RawAudio, error) {
 	fmt.Println(barcode)
 
 	audio := RawAudio{}
-	//wg := sync.WaitGroup{}
 
-	// base_info
-	//idx := 0
-	//wg.Add(1)
-	//go func(idx int) {
 	var url string
 	if catno != "" {
 		url = "https://api.discogs.com/database/search?catno=" + catno
@@ -157,6 +102,20 @@ func getDiscogsRecord(params url.Values) (*RawAudio, error) {
 		}
 		for _, style := range masterObj.Styles {
 			audio.Genres = append(audio.Genres, style)
+		}
+		for _, track := range masterObj.TrackList {
+			audioTrack := AudioTrack{}
+			audioTrack.Position = track.Position
+			audioTrack.Title = track.Title
+			arr := strings.Split(track.Duration, ":")
+			if len(arr) == 2 {
+				min, minErr := strconv.ParseInt(arr[0], 0, 32)
+				sec, secErr := strconv.ParseInt(arr[1], 0, 32)
+				if minErr == nil && secErr == nil {
+					audioTrack.Duration = uint(min*60 + sec)
+				}
+			}
+			audio.AudioTracks = append(audio.AudioTracks, audioTrack)
 		}
 	}
 

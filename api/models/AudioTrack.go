@@ -3,7 +3,6 @@ package models
 import (
 	"errors"
 	"gorm.io/gorm"
-	"time"
 )
 
 func (AudioTrack) TableName() string {
@@ -11,13 +10,11 @@ func (AudioTrack) TableName() string {
 }
 
 type AudioTrack struct {
-	ID        uint      `gorm:"primary_key;auto_increment" json:"id"`
-	Title     string    `gorm:"size:60;column:name;not null" json:"title"`
-	Duration  uint      `gorm:"column:duration" json:"duration"`
-	Position  string    `gorm:"size:10;column:position" json:"position"`
-	AudioId   uint      `gorm:"type:integer;column:audioid" json:"audioid"`
-	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP;column:createdat" json:"createdat"`
-	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP;column:updatedat" json:"updatedat"`
+	ID       uint   `gorm:"primary_key;auto_increment" json:"id"`
+	Title    string `gorm:"size:60;column:name;not null" json:"title"`
+	Duration uint   `gorm:"column:duration" json:"duration"`
+	Position string `gorm:"size:10;column:position" json:"position"`
+	AudioId  uint   `gorm:"type:integer;column:audioid" json:"audioid"`
 }
 
 //func (u *AudioFormat) FindAllAudioFormats(db *gorm.DB) (*[]AudioFormat, error) {
