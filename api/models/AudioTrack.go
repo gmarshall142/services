@@ -11,7 +11,7 @@ func (AudioTrack) TableName() string {
 
 type AudioTrack struct {
 	ID       uint   `gorm:"primary_key;auto_increment" json:"id"`
-	Title    string `gorm:"size:60;column:name;not null" json:"title"`
+	Title    string `gorm:"size:60;column:title;not null" json:"title"`
 	Duration uint   `gorm:"column:duration" json:"duration"`
 	Position string `gorm:"size:10;column:position" json:"position"`
 	AudioId  uint   `gorm:"type:integer;column:audioid" json:"audioid"`
@@ -38,4 +38,22 @@ func (u *AudioTrack) FindAudioTracksByAudioID(db *gorm.DB, uid uint32) (*[]Audio
 		return nil, errors.New("audio tracks Not Found")
 	}
 	return &audioTracks, err
+}
+
+func (obj *AudioTrack) SaveAudioTrack(db *gorm.DB) (*AudioTrack, error) {
+	var err error
+	err = db.Debug().Create(&obj).Error
+	if err != nil {
+		return &AudioTrack{}, err
+	}
+
+	if obj.ID != 0 {
+		var audioTrack AudioTrack
+		err = db.Debug().Model(&AudioTrack{}).Where("id = ?", obj.ID).Find(&audioTrack).Error
+		if err != nil {
+			return &AudioTrack{}, err
+		}
+	}
+
+	return obj, nil
 }

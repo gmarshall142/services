@@ -1,0 +1,11 @@
+select setval('app.activities_id_seq', coalesce(max(id), 1)) from app.activity;
+
+
+select setval('audios_id_seq', coalesce(max(id), 1)) from audios;
+
+select currval('audios_id_seq');
+
+
+select setval('audiotrackss_id_seq', coalesce(max(id), 1)) from audiotracks;
+
+select currval('audiotracks_id_seq');

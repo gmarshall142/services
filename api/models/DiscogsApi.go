@@ -16,8 +16,6 @@ type RawAudio struct {
 	MasterID    uint
 	Title       string
 	ImageUrl    string
-	ImageWidth  uint
-	ImageHeight uint
 	Genres      pq.StringArray
 	Artists     pq.StringArray
 	Catno       string
@@ -27,12 +25,12 @@ type RawAudio struct {
 }
 
 type AudioBaseInfo struct {
-	MasterID uint   `json:"master_id"`
-	Title    string `json:"title"`
-	Catno    string `json:"catno"`
-	Barcode  string `json:"barcode"`
-	Thumb    string `json:"thumb"`
-	Year     string `json:"year"`
+	MasterID uint     `json:"master_id"`
+	Title    string   `json:"title"`
+	Catno    string   `json:"catno"`
+	Barcode  []string `json:"barcode"`
+	Thumb    string   `json:"thumb"`
+	Year     string   `json:"year"`
 }
 
 type AudioBaseInfoResults struct {
@@ -65,6 +63,7 @@ func getDiscogsRecord(params url.Values) (*RawAudio, error) {
 	audio := RawAudio{}
 
 	var url string
+	// Search
 	if catno != "" {
 		url = "https://api.discogs.com/database/search?catno=" + catno
 	} else {
@@ -82,9 +81,12 @@ func getDiscogsRecord(params url.Values) (*RawAudio, error) {
 		results := responseObject.Results[0]
 		audio.MasterID = results.MasterID
 		audio.Catno = results.Catno
-		audio.Barcode = results.Barcode
+		if len(results.Barcode) > 0 {
+			audio.Barcode = results.Barcode[0]
+		}
 		audio.Year = results.Year
 		audio.ImageUrl = results.Thumb
+		// Master Query
 		url = "https://api.discogs.com/masters/" + strconv.FormatUint(uint64(audio.MasterID), 10)
 		bodyBytes, err = discogsCall(url)
 		if err != nil {
