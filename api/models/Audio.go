@@ -6,14 +6,13 @@ import (
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"html"
-	"net/url"
 	"strings"
 	"time"
 )
 
 type Audio struct {
 	ID            uint           `gorm:"primary_key;auto_increment" json:"id"`
-	MasterID      uint           `gorm:"column:masterid;" json:"masterid"`
+	DiscogsID     uint           `gorm:"column:discogsid;" json:"discogsid"`
 	Title         string         `gorm:"size:128;column:title;not null;" json:"title"`
 	SortName      string         `gorm:"size:128;column:sortname;not null;" json:"sortname"`
 	ImageUrl      string         `gorm:"size:256;column:imageurl;not null;" json:"imageurl"`
@@ -24,8 +23,8 @@ type Audio struct {
 	AudioFormatId uint           `gorm:"type:integer;column:audioformatid" json:"audioformatid"`
 	AudioFormat   AudioFormat    `gorm:"foreignKey:AudioFormatId"`
 	Notes         string         `gorm:"size:60;column:notes;" json:"notes"`
-	Catno         string         `gorm:"size:10;column:catno;" json:"catno"`
-	Barcode       string         `gorm:"size:20;column:barcode;" json:"barcode"`
+	Catno         string         `gorm:"size:40;column:catno;" json:"catno"`
+	Barcode       string         `gorm:"size:60;column:barcode;" json:"barcode"`
 	Year          string         `gorm:"size:4;column:year" json:"year"`
 	AudioTracks   []AudioTrack   `gorm:"foreignKey:AudioId"`
 }
@@ -83,15 +82,15 @@ func (obj *Audio) SaveAudio(db *gorm.DB) (*Audio, error) {
 	return obj, nil
 }
 
-//	func (obj *Video) FindAllVideos(db *gorm.DB) (*[]Video, error) {
-//		var err error
-//		var videos []Video
-//		err = db.Debug().Model(&Video{}).Preload("VideoFormat").Find(&videos).Error
-//		if err != nil {
-//			return &[]Video{}, err
-//		}
-//		return &videos, err
-//	}
+func (obj *Audio) FindAllAudios(db *gorm.DB) (*[]Audio, error) {
+	var err error
+	var audios []Audio
+	err = db.Debug().Model(&Audio{}).Preload("AudioFormat").Find(&audios).Error
+	if err != nil {
+		return &[]Audio{}, err
+	}
+	return &audios, err
+}
 
 func (obj *Audio) FindAudioByID(db *gorm.DB, uid uint32) (*Audio, error) {
 	var err error
@@ -120,7 +119,7 @@ func (obj *Audio) UpdateAudio(db *gorm.DB, uid uint32) (*Audio, error) {
 	db = db.Debug().Model(&Audio{}).Where("id = ?", uid).Take(&Audio{}).UpdateColumns(
 		map[string]interface{}{
 			"title":         obj.Title,
-			"masterid":      obj.MasterID,
+			"discogsid":     obj.DiscogsID,
 			"imageurl":      obj.ImageUrl,
 			"genres":        obj.Genres,
 			"artists":       obj.Artists,
@@ -148,7 +147,7 @@ func (obj *Audio) DeleteAudio(db *gorm.DB, uid uint32) (int64, error) {
 	return db.RowsAffected, nil
 }
 
-func (obj *Audio) FindAudioByDiscogsSearch(params url.Values) (*Audio, error) {
+func (obj *Audio) FindAudioByDiscogsSearch(params string) (*Audio, error) {
 	var err error
 	//err = db.Debug().Model(Bike{}).Preload("BikeRim").Where("id = ?", uid).Take(&obj).Error
 	//if err != nil {
@@ -162,7 +161,7 @@ func (obj *Audio) FindAudioByDiscogsSearch(params url.Values) (*Audio, error) {
 		return &Audio{}, err
 	}
 
-	obj.MasterID = rawObj.MasterID
+	obj.DiscogsID = rawObj.DiscogsID
 	obj.Title = rawObj.Title
 	obj.ImageUrl = rawObj.ImageUrl
 	for _, genre := range rawObj.Genres {

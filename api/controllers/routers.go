@@ -33,6 +33,7 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/bikerims/{id}", middlewares.ValidateToken(s.GetBikeRim)).Methods("GET")
 
 	// Audio routes
+	s.Router.Handle("/audio", middlewares.ValidateToken(s.GetAudios)).Methods("GET")
 	s.Router.Handle("/audio", middlewares.ValidateTokenAndPerm(s.CreateAudio, "write:bikes")).Methods("POST")
 	s.Router.HandleFunc("/audio/{id}", middlewares.ValidateTokenAndPerm(s.UpdateAudio, "write:bikes")).Methods("PUT")
 	s.Router.HandleFunc("/audio/{id}", middlewares.ValidateTokenAndPerm(s.DeleteAudio, "write:bikes")).Methods("DELETE")

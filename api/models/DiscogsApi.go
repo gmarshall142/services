@@ -6,14 +6,13 @@ import (
 	"github.com/lib/pq"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
 )
 
 type RawAudio struct {
-	MasterID    uint
+	DiscogsID   uint
 	Title       string
 	ImageUrl    string
 	Genres      pq.StringArray
@@ -25,12 +24,13 @@ type RawAudio struct {
 }
 
 type AudioBaseInfo struct {
-	MasterID uint     `json:"master_id"`
-	Title    string   `json:"title"`
-	Catno    string   `json:"catno"`
-	Barcode  []string `json:"barcode"`
-	Thumb    string   `json:"thumb"`
-	Year     string   `json:"year"`
+	DiscogsID uint     `json:"id"`
+	Title     string   `json:"title"`
+	Catno     string   `json:"catno"`
+	Barcode   []string `json:"barcode"`
+	Thumb     string   `json:"thumb"`
+	Year      string   `json:"year"`
+	Type      string   `json:"type"`
 }
 
 type AudioBaseInfoResults struct {
@@ -53,22 +53,24 @@ type AudioMasterResults struct {
 	TrackList []AudioTrackList `json:"tracklist"`
 }
 
-func getDiscogsRecord(params url.Values) (*RawAudio, error) {
+func getDiscogsRecord(params string) (*RawAudio, error) {
 	fmt.Println(params)
-	catno := params.Get("catno")
-	fmt.Println(catno)
-	barcode := params.Get("barcode")
-	fmt.Println(barcode)
+	//catno := params.Get("catno")
+	//fmt.Println(catno)
+	//barcode := params.Get("barcode")
+	//fmt.Println(barcode)
 
 	audio := RawAudio{}
 
 	var url string
 	// Search
-	if catno != "" {
-		url = "https://api.discogs.com/database/search?catno=" + catno
-	} else {
-		url = "https://api.discogs.com/database/search?barcode=" + barcode
-	}
+	//if catno != "" {
+	//	url = "https://api.discogs.com/database/search?catno=" + catno
+	//} else {
+	//	url = "https://api.discogs.com/database/search?barcode=" + barcode
+	//}
+	url = "https://api.discogs.com/database/search?" + params
+
 	bodyBytes, err := discogsCall(url)
 	if err != nil {
 		fmt.Print(err.Error())
@@ -79,15 +81,19 @@ func getDiscogsRecord(params url.Values) (*RawAudio, error) {
 
 	if len(responseObject.Results) > 0 {
 		results := responseObject.Results[0]
-		audio.MasterID = results.MasterID
+		audio.DiscogsID = results.DiscogsID
 		audio.Catno = results.Catno
 		if len(results.Barcode) > 0 {
 			audio.Barcode = results.Barcode[0]
 		}
 		audio.Year = results.Year
 		audio.ImageUrl = results.Thumb
-		// Master Query
-		url = "https://api.discogs.com/masters/" + strconv.FormatUint(uint64(audio.MasterID), 10)
+		// Master/Release Query
+		if results.Type == "master" {
+			url = "https://api.discogs.com/masters/" + strconv.FormatUint(uint64(audio.DiscogsID), 10)
+		} else {
+			url = "https://api.discogs.com/releases/" + strconv.FormatUint(uint64(audio.DiscogsID), 10)
+		}
 		bodyBytes, err = discogsCall(url)
 		if err != nil {
 			fmt.Print(err.Error())

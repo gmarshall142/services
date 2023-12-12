@@ -11,7 +11,7 @@ func (AudioTrack) TableName() string {
 
 type AudioTrack struct {
 	ID       uint   `gorm:"primary_key;auto_increment" json:"id"`
-	Title    string `gorm:"size:60;column:title;not null" json:"title"`
+	Title    string `gorm:"size:256;column:title;not null" json:"title"`
 	Duration uint   `gorm:"column:duration" json:"duration"`
 	Position string `gorm:"size:10;column:position" json:"position"`
 	AudioId  uint   `gorm:"type:integer;column:audioid" json:"audioid"`

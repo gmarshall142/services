@@ -25,17 +25,17 @@ func (server *Server) GetAudioFormats(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusOK, audioFormats)
 }
 
-//func (server *Server) GetVideos(w http.ResponseWriter, r *http.Request) {
-//
-//	video := models.Video{}
-//
-//	videos, err := video.FindAllVideos(server.DB)
-//	if err != nil {
-//		responses.ERROR(w, http.StatusInternalServerError, err)
-//		return
-//	}
-//	responses.JSON(w, http.StatusOK, videos)
-//}
+func (server *Server) GetAudios(w http.ResponseWriter, r *http.Request) {
+
+	audio := models.Audio{}
+
+	audios, err := audio.FindAllAudios(server.DB)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	responses.JSON(w, http.StatusOK, audios)
+}
 
 func (server *Server) CreateAudio(w http.ResponseWriter, r *http.Request) {
 	audio, err := getAudioRecord(r)
@@ -77,14 +77,14 @@ func (server *Server) GetAudioData(w http.ResponseWriter, r *http.Request) {
 
 	//vars := mux.Vars(r)
 	rawUrl, _ := url.Parse(r.RequestURI)
-	params, _ := url.ParseQuery(rawUrl.RawQuery)
+	//params, _ := url.ParseQuery(rawUrl.RawQuery)
 	//uid, err := strconv.ParseUint(vars["id"], 10, 32)
 	//if err != nil {
 	//	responses.ERROR(w, http.StatusBadRequest, err)
 	//	return
 	//}
 	audio := models.Audio{}
-	rec, err := audio.FindAudioByDiscogsSearch(params)
+	rec, err := audio.FindAudioByDiscogsSearch(rawUrl.RawQuery)
 	if err != nil {
 		responses.ERROR(w, http.StatusBadRequest, err)
 		return
